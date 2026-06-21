@@ -484,8 +484,12 @@ const styles = {
         color: '#8696a0', cursor: 'pointer', fontSize: '16px'
     },
     inputArea: {
-        display: 'flex', alignItems: 'center', gap: '8px',
-        padding: '10px 16px', background: '#202c33',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 16px',
+        paddingBottom: 'calc(10px + env(safe-area-inset-bottom))', // ← ye add karo
+        background: '#202c33',
         borderTop: '1px solid #374045'
     },
     plusBtn: {
