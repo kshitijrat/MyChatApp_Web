@@ -178,7 +178,7 @@ const Chat = () => {
 
             setTimeout(() => {
                 textInputRef.current?.focus();
-            }, 100);
+            }, 50);
 
         } catch (err) {
             console.error('Send error:', err);
@@ -407,7 +407,7 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 16px',
-        marginTop: '30px',
+        marginTop: '50px',
         background: '#202c33',
         borderBottom: '1px solid #374045'
     },
