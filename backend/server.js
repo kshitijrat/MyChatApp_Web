@@ -7,10 +7,10 @@ import { createRequire } from 'module';
 dotenv.config();
 
 const require = createRequire(import.meta.url);
-const serviceAccount = require('./serviceAccount.json');
-// const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-//   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-//   : require('./serviceAccount.json');
+// const serviceAccount = require('./serviceAccount.json');
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+  : require('./serviceAccount.json');
 
 // Firebase Admin Init — PEHLE HONA CHAHIYE
 initializeApp({
