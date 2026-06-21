@@ -391,16 +391,16 @@ const styles = {
     container: {
         display: 'flex',
         flexDirection: 'column',
-        // height: '100vh',
+        height: '100vh',
         paddingTop: 'env(safe-area-inset-top)',
         background: '#111b21',
-        height: '100dvh'
     },
     header: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 16px',
+        marginTop: '10px',
         background: '#202c33',
         borderBottom: '1px solid #374045'
     },
