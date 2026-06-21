@@ -407,7 +407,6 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 16px',
-        marginTop: '50px',
         background: '#202c33',
         borderBottom: '1px solid #374045',
         position: 'sticky',
