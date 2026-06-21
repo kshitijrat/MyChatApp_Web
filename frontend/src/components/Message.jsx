@@ -9,6 +9,8 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
   const [viewOnceOpened, setViewOnceOpened] = useState(msg.viewed);
   const deleteMenuRef = useRef(null);
+  const [loveNoteOpen, setLoveNoteOpen] = useState(false);
+  const [countdown, setCountdown] = useState(600); // 10 min = 600 seconds
 
   // Seen status update
   useEffect(() => {
@@ -28,6 +30,25 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+
+  // Love note count down effect
+  useEffect(() => {
+    if (!loveNoteOpen) return;
+
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setLoveNoteOpen(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [loveNoteOpen]);
+
   // View once handle
   const handleViewOnce = async () => {
     if (viewOnceOpened) return;
@@ -38,6 +59,27 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
     } catch (err) {
       console.error('View once error:', err);
     }
+  };
+
+  // Love not Open karo
+  const handleOpenLoveNote = async () => {
+    setLoveNoteOpen(true);
+    setCountdown(600);
+    try {
+      await axios.patch(`${API_URL}/messages/view-once/${msg.id}`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // count down display min or second
+  const formatCountdown = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `Disappears in ${mins} min ${secs} sec`;
+    }
+    return `Disappears in ${secs} sec`;
   };
 
   // Delete for me
@@ -221,6 +263,34 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
                 )}
               </div>
             )}
+
+
+            {/* Love Note */}
+            {msg.type === 'love_note' && (
+              <div style={msgStyles.loveNoteContainer}>
+                {isOwn ? (
+                  <div style={msgStyles.loveNoteTag}>💌 Secret Love Note Sent</div>
+                ) : msg.viewed && !loveNoteOpen ? (
+                  <div style={msgStyles.loveNoteViewed}>💌 Love note opened</div>
+                ) : loveNoteOpen ? (
+                  <>
+                    <div style={msgStyles.loveNoteTag}>💌 Secret Love Note</div>
+                    <div style={msgStyles.loveNoteText}>{msg.text}</div>
+                    <div style={msgStyles.loveNoteTimer}>
+                      ⏳ {formatCountdown(countdown)}
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    style={msgStyles.loveNoteReadBtn}
+                    onClick={handleOpenLoveNote}
+                  >
+                    💌 Open Secret Note
+                  </button>
+                )}
+              </div>
+            )}
+
           </>
         )}
 
@@ -385,6 +455,57 @@ const styles = {
   statusTick: {
     fontSize: '12px',
     color: '#8696a0'
+  }
+};
+
+
+const msgStyles = {
+  loveNoteContainer: {
+    background: 'linear-gradient(135deg, #1a0a0f, #0f0f23)',
+    border: '1px solid #ff6b9d60',
+    borderRadius: '12px',
+    padding: '12px',
+    maxWidth: '260px',
+    boxShadow: '0 0 20px rgba(255,107,157,0.15)'
+  },
+  loveNoteTag: {
+    color: '#ff6b9d',
+    fontSize: '12px',
+    fontWeight: '700',
+    marginBottom: '8px',
+    letterSpacing: '0.5px'
+  },
+  loveNoteText: {
+    color: '#e9edef',
+    fontSize: '14px',
+    lineHeight: '1.6',
+    marginBottom: '10px'
+  },
+  loveNoteReadBtn: {
+    width: '100%',
+    background: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '8px',
+    color: '#fff',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer'
+  },
+  loveNoteViewed: {
+    color: '#8696a0',
+    fontSize: '13px',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: '4px'
+  },
+  loveNoteTimer: {
+    color: '#747071',
+    fontSize: '11px',
+    marginTop: '8px',
+    fontStyle: 'italic',
+    textAlign: 'right',
+    fontWeight: '600'
   }
 };
 

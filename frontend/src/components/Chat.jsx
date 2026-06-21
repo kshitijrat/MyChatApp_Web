@@ -7,6 +7,7 @@ import Message from './Message';
 import ImageViewer from './ImageViewer';
 import { rtdb } from '../firebase';
 import { ref, onValue } from 'firebase/database';
+import MoodPicker from './MoodPicker';
 
 // const API_URL = 'http://localhost:5000/api';
 const API_URL = import.meta.env.VITE_API_URL;
@@ -21,6 +22,11 @@ const Chat = () => {
     const [isOtherOnline, setIsOtherOnline] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isTabFocused, setIsTabFocused] = useState(true);
+    const [showMoodPicker, setShowMoodPicker] = useState(false);
+    const [otherMood, setOtherMood] = useState('');
+    const [myMood, setMyMood] = useState('');
+    const [showLoveNote, setShowLoveNote] = useState(false);
+    const [loveNoteText, setLoveNoteText] = useState('');
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
@@ -42,6 +48,17 @@ const Chat = () => {
             fetchOtherUser();
         }
     }, [currentUser]);
+
+    useEffect(() => {
+        if (!currentUser) return;
+        const myStatusRef = ref(rtdb, `status/${currentUser.uid}`);
+        const unsub = onValue(myStatusRef, (snapshot) => {
+            const data = snapshot.val();
+            setMyMood(data?.mood || '');
+        });
+        return () => unsub();
+    }, [currentUser]);
+
 
     // Messages real-time listen karo Firestore se
     useEffect(() => {
@@ -118,10 +135,13 @@ const Chat = () => {
         const unsub = onValue(statusRef, (snapshot) => {
             const data = snapshot.val();
             setIsOtherOnline(data?.online || false);
+            setOtherMood(data?.mood || '');
         });
 
         return () => unsub();
     }, [otherUser]);
+
+
 
     // Tab focus track karo
     useEffect(() => {
@@ -218,6 +238,24 @@ const Chat = () => {
         }
     };
 
+    // Love note func
+    const sendLoveNote = async () => {
+        if (!loveNoteText.trim()) return;
+        try {
+            await axios.post(`${API_URL}/messages/send`, {
+                senderId: currentUser.uid,
+                receiverId: otherUser.uid,
+                text: loveNoteText,
+                type: 'love_note',
+                replyTo: null
+            });
+            setLoveNoteText('');
+            setShowLoveNote(false);
+        } catch (err) {
+            console.error('Love note error:', err);
+        }
+    };
+
     // Enter press to send
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -259,10 +297,20 @@ const Chat = () => {
                             color: isOtherOnline ? '#00a884' : '#8696a0'
                         }}>
                             {isOtherOnline ? 'online' : 'offline'}
+                            {otherMood ? ` • ${otherMood}` : ''}
                         </div>
                     </div>
                 </div>
-                <button style={styles.logoutBtn} onClick={logout}>Logout</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        style={styles.moodBtn}
+                        onClick={() => setShowMoodPicker(true)}
+                        title="Set mood"
+                    >
+                        {myMood ? myMood.split(' ')[0] : '😶'}
+                    </button>
+                    <button style={styles.logoutBtn} onClick={logout}>Logout</button>
+                </div>
             </div>
 
             {/* Messages */}
@@ -349,6 +397,14 @@ const Chat = () => {
                     👁️
                 </button>
 
+                <button
+                    style={styles.iconBtn}
+                    onClick={() => setShowLoveNote(true)}
+                    title="Secret Love Note"
+                >
+                    💌
+                </button>
+
                 <input
                     ref={textInputRef}
                     style={styles.textInput}
@@ -377,6 +433,48 @@ const Chat = () => {
                     imageUrl={viewOnceImg}
                     onClose={() => setViewOnceImg(null)}
                 />
+            )}
+
+            {/* Mood picker */}
+            {showMoodPicker && (
+                <MoodPicker onClose={() => setShowMoodPicker(false)} />
+            )}
+
+            {/* Show Love Notes */}
+            {showLoveNote && (
+                <div style={styles.loveNoteOverlay} onClick={() => setShowLoveNote(false)}>
+                    <div style={styles.loveNoteContainer} onClick={e => e.stopPropagation()}>
+
+                        <div style={styles.loveNoteHeader}>
+                            <span style={styles.loveNoteTitle}>💌 Secret Love Note</span>
+                            <button
+                                style={styles.loveNoteClose}
+                                onClick={() => setShowLoveNote(false)}
+                            >✕</button>
+                        </div>
+
+                        <p style={styles.loveNoteSubtitle}>
+                            Ye note sirf ek baar padhne ke baad disappear ho jaayega ❤️
+                        </p>
+
+                        <textarea
+                            style={styles.loveNoteInput}
+                            placeholder="Apne dil ki baat likho... 💕"
+                            value={loveNoteText}
+                            onChange={(e) => setLoveNoteText(e.target.value)}
+                            rows={4}
+                            autoFocus
+                        />
+
+                        <button
+                            style={styles.loveNoteSendBtn}
+                            onClick={sendLoveNote}
+                        >
+                            Send Love Note 💌
+                        </button>
+
+                    </div>
+                </div>
             )}
 
         </div>
@@ -412,7 +510,7 @@ const styles = {
         position: 'sticky',
         zIndex: 100,
         top: 0
-        
+
     },
     headerLeft: {
         display: 'flex',
@@ -439,6 +537,14 @@ const styles = {
     headerStatus: {
         fontSize: '12px',
         color: '#00a884'
+    },
+    moodBtn: {
+        background: 'transparent',
+        border: '1px solid #374045',
+        borderRadius: '20px',
+        padding: '4px 10px',
+        fontSize: '18px',
+        cursor: 'pointer'
     },
     logoutBtn: {
         background: 'transparent',
@@ -519,6 +625,73 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    loveNoteOverlay: {
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.7)',
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+    },
+    loveNoteContainer: {
+        background: '#1a1a2e',
+        border: '1px solid #ff6b9d40',
+        borderRadius: '16px',
+        padding: '24px',
+        width: '100%',
+        maxWidth: '400px',
+        boxShadow: '0 0 40px rgba(255,107,157,0.2)'
+    },
+    loveNoteHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '8px'
+    },
+    loveNoteTitle: {
+        color: '#ff6b9d',
+        fontSize: '18px',
+        fontWeight: '700'
+    },
+    loveNoteClose: {
+        background: 'transparent',
+        border: 'none',
+        color: '#8696a0',
+        fontSize: '18px',
+        cursor: 'pointer'
+    },
+    loveNoteSubtitle: {
+        color: '#8696a0',
+        fontSize: '12px',
+        marginBottom: '16px'
+    },
+    loveNoteInput: {
+        width: '100%',
+        background: '#0f0f23',
+        border: '1px solid #ff6b9d40',
+        borderRadius: '10px',
+        padding: '12px',
+        color: '#e9edef',
+        fontSize: '15px',
+        outline: 'none',
+        resize: 'none',
+        marginBottom: '16px',
+        lineHeight: '1.6',
+        boxSizing: 'border-box'
+    },
+    loveNoteSendBtn: {
+        width: '100%',
+        background: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
+        border: 'none',
+        borderRadius: '10px',
+        padding: '13px',
+        color: '#fff',
+        fontSize: '15px',
+        fontWeight: '700',
+        cursor: 'pointer'
     }
 };
 
