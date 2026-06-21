@@ -8,8 +8,8 @@ import ImageViewer from './ImageViewer';
 import { rtdb } from '../firebase';
 import { ref, onValue } from 'firebase/database';
 
-const API_URL = 'http://localhost:5000/api';
-
+// const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 const Chat = () => {
     const { currentUser, logout } = useAuth();
     const [messages, setMessages] = useState([]);
