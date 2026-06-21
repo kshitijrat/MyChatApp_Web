@@ -389,11 +389,11 @@ const styles = {
         fontSize: '16px'
     },
     container: {
-        marginTop:'10px',
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        background: '#111b21'
+        // height: '100vh',
+        background: '#111b21',
+        height: '100dvh'
     },
     header: {
         display: 'flex',
