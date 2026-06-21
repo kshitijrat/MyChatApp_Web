@@ -27,6 +27,7 @@ const Chat = () => {
     const [showLoveNote, setShowLoveNote] = useState(false);
     const [loveNoteText, setLoveNoteText] = useState('');
     const [showAttachMenu, setShowAttachMenu] = useState(false);
+    const [textareaHeight, setTextareaHeight] = useState('40px');
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
@@ -372,14 +373,28 @@ const Chat = () => {
                     )}
                 </div>
 
-                <input
+                <textarea
                     ref={textInputRef}
-                    style={styles.textInput}
+                    style={{
+                        ...styles.textInput,
+                        height: textareaHeight,
+                        maxHeight: '120px',
+                        overflowY: 'auto',
+                        resize: 'none',
+                        lineHeight: '1.5',
+                    }}
                     placeholder={loading ? 'Uploading...' : 'Type a message...'}
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => {
+                        setText(e.target.value);
+                        // Auto height adjust
+                        e.target.style.height = '40px';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                        setTextareaHeight(e.target.scrollHeight + 'px');
+                    }}
                     onKeyPress={handleKeyPress}
                     disabled={loading}
+                    rows={1}
                 />
 
                 <button
