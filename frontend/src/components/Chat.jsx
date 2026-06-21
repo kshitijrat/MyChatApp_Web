@@ -24,6 +24,7 @@ const Chat = () => {
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
+    const textInputRef = useRef(null);
 
     // Dusra user fetch karo automatically
     useEffect(() => {
@@ -174,6 +175,11 @@ const Chat = () => {
                 setReplyTo(null);
             }
             setText('');
+
+            setTimeout(() => {
+                textInputRef.current?.focus();
+            }, 100);
+
         } catch (err) {
             console.error('Send error:', err);
         }
@@ -344,6 +350,7 @@ const Chat = () => {
                 </button>
 
                 <input
+                    ref={textInputRef}
                     style={styles.textInput}
                     placeholder={loading ? 'Uploading...' : 'Type a message...'}
                     value={text}
@@ -400,7 +407,7 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 16px',
-        marginTop: '10px',
+        marginTop: '30px',
         background: '#202c33',
         borderBottom: '1px solid #374045'
     },
