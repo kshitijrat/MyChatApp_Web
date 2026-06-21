@@ -409,7 +409,11 @@ const styles = {
         padding: '10px 16px',
         marginTop: '50px',
         background: '#202c33',
-        borderBottom: '1px solid #374045'
+        borderBottom: '1px solid #374045',
+        position: 'sticky',
+        zIndex: 100,
+        top: 0
+        
     },
     headerLeft: {
         display: 'flex',
