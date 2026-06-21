@@ -108,6 +108,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '16px'
+    
   },
   title: {
     color: '#e9edef',

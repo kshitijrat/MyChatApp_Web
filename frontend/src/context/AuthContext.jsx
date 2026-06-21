@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
             const userStatusRef = ref(rtdb, `status/${auth.currentUser.uid}`);
             await set(userStatusRef, {
                 online: false,
-                lastSeen: serverTimestamp(), 
+                lastSeen: serverTimestamp(),
                 mood: savedMood
             });
         }
@@ -47,14 +47,19 @@ export const AuthProvider = ({ children }) => {
     };
 
 
-    // Mood update karo
+    // updateMood function mein onDisconnect bhi update karo:
     const updateMood = async (mood) => {
         if (auth.currentUser) {
-            // Realtime DB mein bhi rakho (online status ke saath)
             const userStatusRef = ref(rtdb, `status/${auth.currentUser.uid}`);
             await update(userStatusRef, { mood });
 
-            // Firestore mein permanently save karo
+            // onDisconnect bhi update karo naye mood ke saath
+            onDisconnect(userStatusRef).set({
+                online: false,
+                lastSeen: serverTimestamp(),
+                mood: mood
+            });
+
             await setDoc(doc(db, 'users', auth.currentUser.uid), {
                 mood
             }, { merge: true });
