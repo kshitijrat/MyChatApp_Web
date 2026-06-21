@@ -392,6 +392,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         // height: '100vh',
+        paddingTop: 'env(safe-area-inset-top)',
         background: '#111b21',
         height: '100dvh'
     },
