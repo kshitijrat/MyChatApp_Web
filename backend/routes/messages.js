@@ -252,4 +252,34 @@ router.delete('/delete-for-everyone/:messageId', async (req, res) => {
   }
 });
 
+
+// Delete all messages between 2 users
+router.delete('/delete-all', async (req, res) => {
+  try {
+    const { user1, user2 } = req.body;
+
+    const snap1 = await getDb().collection('messages')
+      .where('senderId', '==', user1)
+      .where('receiverId', '==', user2)
+      .get();
+
+    const snap2 = await getDb().collection('messages')
+      .where('senderId', '==', user2)
+      .where('receiverId', '==', user1)
+      .get();
+
+    const batch = getDb().batch();
+
+    snap1.docs.forEach(doc => batch.delete(doc.ref));
+    snap2.docs.forEach(doc => batch.delete(doc.ref));
+
+    await batch.commit();
+
+    res.status(200).json({ success: true, message: 'All chats deleted' });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

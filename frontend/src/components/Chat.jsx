@@ -7,10 +7,11 @@ import axios from 'axios';
 import Message from './Message';
 import ImageViewer from './ImageViewer';
 import MoodPicker from './MoodPicker';
+import EmergencySettings from './EmergencySettings';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Chat = () => {
+const Chat = ({ onEmergency }) => {
     const { currentUser, logout } = useAuth();
     const [messages, setMessages] = useState([]);
     const [otherUser, setOtherUser] = useState(null);
@@ -20,7 +21,7 @@ const Chat = () => {
     const [viewOnceImg, setViewOnceImg] = useState(null);
     const [isOtherOnline, setIsOtherOnline] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [isTabFocused, setIsTabFocused] = useState(true);
+    //const [isTabFocused, setIsTabFocused] = useState(true);
     const [showMoodPicker, setShowMoodPicker] = useState(false);
     const [otherMood, setOtherMood] = useState('');
     const [myMood, setMyMood] = useState('');
@@ -28,15 +29,19 @@ const Chat = () => {
     const [loveNoteText, setLoveNoteText] = useState('');
     const [showAttachMenu, setShowAttachMenu] = useState(false);
     const [textareaHeight, setTextareaHeight] = useState('40px');
+    const [showEmergency, setShowEmergency] = useState(false);
+    const [showEmergencySettings, setShowEmergencySettings] = useState(false);
+    const [avatarTapCount, setAvatarTapCount] = useState(0);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
     const textInputRef = useRef(null);
+    const isTabFocusedRef = useRef(true);
 
     // Tab focus track
     useEffect(() => {
-        const handleFocus = () => setIsTabFocused(true);
-        const handleBlur = () => setIsTabFocused(false);
+        const handleFocus = () => { isTabFocusedRef.current = true; };
+        const handleBlur = () => { isTabFocusedRef.current = false; };
         window.addEventListener('focus', handleFocus);
         window.addEventListener('blur', handleBlur);
         return () => {
@@ -119,7 +124,7 @@ const Chat = () => {
                 if (
                     latestMsg &&
                     latestMsg.senderId !== currentUser.uid &&
-                    !isTabFocused &&
+                    !isTabFocusedRef.current &&  // ← ref use karo
                     Notification.permission === 'granted'
                 ) {
                     new Notification('MyChatApp 💬', { body: 'New Message' });
@@ -139,7 +144,7 @@ const Chat = () => {
         });
 
         return () => { unsub1(); unsub2(); };
-    }, [currentUser, otherUser, isTabFocused]);
+    }, [currentUser, otherUser]);
 
     // Auto scroll
     useEffect(() => {
@@ -205,6 +210,44 @@ const Chat = () => {
         }
     };
 
+    // triple tap on avtar for emergency trigger
+    const handleAvatarTap = () => {
+        const newCount = avatarTapCount + 1;
+        setAvatarTapCount(newCount);
+        if (newCount >= 3) {
+            setShowEmergency(true);
+            setAvatarTapCount(0);
+        }
+        setTimeout(() => setAvatarTapCount(0), 2000);
+    };
+
+    const handleEmergencyCall = () => {
+        const number = localStorage.getItem('emergency_number') || '+919755345095';
+        window.location.href = `tel:${number}`;
+    };
+
+    const handleDeleteAllChat = async () => {
+        try {
+            await axios.delete(`${API_URL}/messages/delete-all`, {
+                data: {
+                    user1: currentUser.uid,
+                    user2: otherUser.uid
+                }
+            });
+            setShowEmergency(false);
+        } catch (err) {
+            console.error('Delete all error:', err);
+        }
+    };
+
+    const handleEmergencyLogout = async () => {
+        if (onEmergency) {
+            onEmergency(); // Fake screen activate
+        }
+
+        await logout();
+    };
+
     // Love note send
     const sendLoveNote = async () => {
         if (!loveNoteText.trim()) return;
@@ -224,7 +267,9 @@ const Chat = () => {
     };
 
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
@@ -261,7 +306,7 @@ const Chat = () => {
             {/* Header */}
             <div style={styles.header}>
                 <div style={styles.headerLeft}>
-                    <div style={styles.avatar}>
+                    <div style={styles.avatar} onClick={handleAvatarTap}>
                         {otherUser?.displayName?.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -442,6 +487,52 @@ const Chat = () => {
                 </div>
             )}
 
+            {/* emergency modal */}
+            {showEmergency && (
+                <div style={styles.emergencyOverlay} onClick={() => setShowEmergency(false)}>
+                    <div style={styles.emergencyContainer} onClick={e => e.stopPropagation()}>
+
+                        <div style={styles.emergencyHeader}>
+                            <span style={styles.emergencyTitle}>🚨 Emergency</span>
+                            <button
+                                style={styles.emergencyClose}
+                                onClick={() => setShowEmergency(false)}
+                            >✕</button>
+                        </div>
+
+                        <button style={styles.emergencyBtn} onClick={handleEmergencyCall}>
+                            📞 Emergency Call
+                        </button>
+
+                        <button
+                            style={{ ...styles.emergencyBtn, background: '#ef444420', color: '#ef4444' }}
+                            onClick={handleDeleteAllChat}
+                        >
+                            🗑️ Delete All Chats
+                        </button>
+
+                        <button
+                            style={{ ...styles.emergencyBtn, background: '#f59e0b20', color: '#f59e0b' }}
+                            onClick={handleEmergencyLogout}
+                        >
+                            🔒 Hide App (Fake Screen)
+                        </button>
+
+                        <button
+                            style={{ ...styles.emergencyBtn, background: '#8696a020', color: '#8696a0' }}
+                            onClick={() => { setShowEmergencySettings(true); setShowEmergency(false); }}
+                        >
+                            ⚙️ Settings
+                        </button>
+
+                    </div>
+                </div>
+            )}
+
+            {showEmergencySettings && (
+                <EmergencySettings onClose={() => setShowEmergencySettings(false)} />
+            )}
+
         </div>
     );
 };
@@ -569,6 +660,31 @@ const styles = {
         width: '100%', background: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
         border: 'none', borderRadius: '10px', padding: '13px',
         color: '#fff', fontSize: '15px', fontWeight: '700', cursor: 'pointer'
+    },
+    emergencyOverlay: {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.8)', zIndex: 300,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+    },
+    emergencyContainer: {
+        background: '#202c33', borderRadius: '16px 16px 0 0',
+        padding: '24px', width: '100%', maxWidth: '500px',
+        paddingBottom: 'calc(24px + env(safe-area-inset-bottom))'
+    },
+    emergencyHeader: {
+        display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', marginBottom: '20px'
+    },
+    emergencyTitle: { color: '#ef4444', fontSize: '18px', fontWeight: '700' },
+    emergencyClose: {
+        background: 'transparent', border: 'none',
+        color: '#8696a0', fontSize: '18px', cursor: 'pointer'
+    },
+    emergencyBtn: {
+        display: 'block', width: '100%', padding: '14px',
+        background: '#00a88420', border: 'none', borderRadius: '10px',
+        color: '#00a884', fontSize: '15px', fontWeight: '600',
+        cursor: 'pointer', marginBottom: '10px', textAlign: 'left'
     }
 };
 
