@@ -234,7 +234,9 @@ const Chat = ({ onEmergency }) => {
                     user2: otherUser.uid
                 }
             });
+            setMessages([]); // set all message to zero (clr all msg)
             setShowEmergency(false);
+            await(logout) // after clr all msg logout app 
         } catch (err) {
             console.error('Delete all error:', err);
         }
@@ -242,9 +244,8 @@ const Chat = ({ onEmergency }) => {
 
     const handleEmergencyLogout = async () => {
         if (onEmergency) {
-            onEmergency(); // Fake screen activate
+            onEmergency(); // Fake screen activate  
         }
-
         await logout();
     };
 
