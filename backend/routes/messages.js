@@ -20,6 +20,9 @@ router.post('/send', async (req, res) => {
       replyTo: req.body.replyTo || null,    // reply feature
       imageUrl: req.body.imageUrl || null,  // photo ke liye
       viewOnce: type === 'view_once',       // view once flag
+      fileName: req.body.fileName || null,   // ← add karo
+      fileSize: req.body.fileSize || null,   // ← add karo
+      fileType: req.body.fileType || null,   // ← add karo
       viewed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

@@ -21,10 +21,23 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB max
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      'application/zip'
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only images are allowed!'), false);
+      cb(new Error('File type not allowed!'), false);
     }
   }
 });
@@ -119,6 +132,38 @@ router.delete('/image', async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+});
+
+
+// Document upload
+router.post('/document', upload.single('document'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const { senderId } = req.body;
+    const base64File = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+    const result = await cloudinary.uploader.upload(base64File, {
+      folder: `chat-app/documents/${senderId}`,
+      resource_type: 'raw',  // raw = documents ke liye
+      public_id: `${Date.now()}_${req.file.originalname}`
+    });
+
+    res.status(200).json({
+      success: true,
+      fileUrl: result.secure_url,
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      fileType: req.file.mimetype,
+      type: 'document'
+    });
+
+  } catch (error) {
+    console.error('Document upload error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

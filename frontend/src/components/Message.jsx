@@ -112,6 +112,24 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (fileType) => {
+    if (!fileType) return '📄';
+    if (fileType.includes('pdf')) return '📕';
+    if (fileType.includes('word')) return '📘';
+    if (fileType.includes('excel') || fileType.includes('sheet')) return '📗';
+    if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📙';
+    if (fileType.includes('zip')) return '🗜️';
+    if (fileType.includes('text')) return '📝';
+    return '📄';
+  };
+
   // Status ticks
   const renderStatus = () => {
     if (!isOwn) return null;
@@ -241,6 +259,30 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
               </div>
             )}
 
+            {/* Document */}
+            {/* Document */}
+            {msg.type === 'document' && msg.imageUrl && (
+
+              <a href={msg.imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={msgStyles.documentContainer}
+              >
+                <div style={msgStyles.documentIcon}>
+                  {getFileIcon(msg.fileType)}
+                </div>
+                <div style={msgStyles.documentInfo}>
+                  <div style={msgStyles.documentName}>
+                    {msg.fileName || 'Document'}
+                  </div>
+                  <div style={msgStyles.documentSize}>
+                    {formatFileSize(msg.fileSize)} • Tap to open
+                  </div>
+                </div>
+                <div style={msgStyles.downloadIcon}>⬇️</div>
+              </a>
+            )}
+
             {/* View once */}
             {msg.type === 'view_once' && (
               <div style={styles.viewOnceContainer}>
@@ -291,6 +333,9 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
               </div>
             )}
 
+
+
+
           </>
         )}
 
@@ -301,7 +346,7 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
         </div>
 
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -506,6 +551,42 @@ const msgStyles = {
     fontStyle: 'italic',
     textAlign: 'right',
     fontWeight: '600'
+  },
+  documentContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    background: 'rgba(0,0,0,0.2)',
+    borderRadius: '10px',
+    padding: '10px',
+    textDecoration: 'none',
+    minWidth: '200px',
+    maxWidth: '260px'
+  },
+  documentIcon: {
+    fontSize: '32px',
+    flexShrink: 0
+  },
+  documentInfo: {
+    flex: 1,
+    overflow: 'hidden'
+  },
+  documentName: {
+    color: '#e9edef',
+    fontSize: '13px',
+    fontWeight: '600',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+  documentSize: {
+    color: '#8696a0',
+    fontSize: '11px',
+    marginTop: '2px'
+  },
+  downloadIcon: {
+    fontSize: '16px',
+    flexShrink: 0
   }
 };
 

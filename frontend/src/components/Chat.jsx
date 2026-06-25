@@ -38,6 +38,7 @@ const Chat = ({ onEmergency }) => {
     const viewOnceInputRef = useRef(null);
     const textInputRef = useRef(null);
     const isTabFocusedRef = useRef(true);
+    const documentInputRef = useRef(null);
 
     // Tab focus track
     useEffect(() => {
@@ -185,6 +186,42 @@ const Chat = ({ onEmergency }) => {
             setTimeout(() => textInputRef.current?.focus(), 50);
         } catch (err) {
             console.error('Send error:', err);
+        }
+    };
+
+
+    // handle document upload
+    const handleDocumentUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setLoading(true);
+        setShowAttachMenu(false);
+        try {
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('senderId', currentUser.uid);
+
+            const res = await axios.post(`${API_URL}/upload/document`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            await axios.post(`${API_URL}/messages/send`, {
+                senderId: currentUser.uid,
+                receiverId: otherUser.uid,
+                text: '',
+                type: 'document',
+                imageUrl: res.data.fileUrl,
+                fileName: res.data.fileName,
+                fileSize: res.data.fileSize,
+                fileType: res.data.fileType,
+                replyTo: null
+            });
+
+        } catch (err) {
+            console.error('Document upload error:', err);
+        } finally {
+            setLoading(false);
+            e.target.value = '';
         }
     };
 
@@ -407,12 +444,19 @@ const Chat = ({ onEmergency }) => {
                 </div>
             )}
 
-            {/* Input Area */}
+            {/* Hidden Input Area */}
             <div style={styles.inputArea}>
                 <input ref={fileInputRef} type="file" accept="image/*"
                     style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, false)} />
                 <input ref={viewOnceInputRef} type="file" accept="image/*"
                     style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, true)} />
+                <input
+                    ref={documentInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                    style={{ display: 'none' }}
+                    onChange={handleDocumentUpload}
+                />
 
                 {/* + Button with dropdown */}
                 <div style={{ position: 'relative' }}>
@@ -426,6 +470,12 @@ const Chat = ({ onEmergency }) => {
                     {/* Dropdown menu */}
                     {showAttachMenu && (
                         <div style={styles.attachMenu}>
+                            <button
+                                style={styles.attachMenuItem}
+                                onClick={() => { documentInputRef.current.click(); }}
+                            >
+                                📄 Document
+                            </button>
                             <button
                                 style={styles.attachMenuItem}
                                 onClick={() => { fileInputRef.current.click(); }}
