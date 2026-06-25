@@ -155,18 +155,24 @@ const Chat = ({ onEmergency }) => {
 
     // Send message
     const sendMessage = async () => {
-        if (!text.trim() && !editingMsg) return;
+        // Sirf start aur end ki space trim karo — beech wali nahi
+        const trimmedText = text.replace(/^\s+|\s+$/g, '');
+
+        if (!trimmedText && !editingMsg) return;
+
         try {
             if (editingMsg) {
                 await axios.patch(`${API_URL}/messages/edit/${editingMsg.id}`, {
-                    text, senderId: currentUser.uid
+                    text: trimmedText,  // ← trimmedText use karo
+                    senderId: currentUser.uid
                 });
                 setEditingMsg(null);
             } else {
                 await axios.post(`${API_URL}/messages/send`, {
                     senderId: currentUser.uid,
                     receiverId: otherUser.uid,
-                    text, type: 'text',
+                    text: trimmedText,  // ← trimmedText use karo
+                    type: 'text',
                     replyTo: replyTo ? {
                         id: replyTo.id,
                         text: replyTo.text,
