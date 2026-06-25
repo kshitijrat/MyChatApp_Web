@@ -32,6 +32,7 @@ const Chat = ({ onEmergency }) => {
     const [showEmergency, setShowEmergency] = useState(false);
     const [showEmergencySettings, setShowEmergencySettings] = useState(false);
     const [avatarTapCount, setAvatarTapCount] = useState(0);
+    const [lastSeen, setLastSeen] = useState(null);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
@@ -88,6 +89,7 @@ const Chat = ({ onEmergency }) => {
             const data = snapshot.val();
             setIsOtherOnline(data?.online || false);
             setOtherMood(data?.mood || '');
+            setLastSeen(data?.lastSeen || null);
         });
         return () => unsub();
     }, [otherUser]);
@@ -210,6 +212,23 @@ const Chat = ({ onEmergency }) => {
         }
     };
 
+    const formatLastSeen = (timestamp) => {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (mins < 1) return 'last seen just now';
+        if (mins < 60) return `last seen ${mins} min ago`;
+        if (hours < 24) return `last seen today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        if (days === 1) return `last seen yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        return `last seen ${date.toLocaleDateString([], { day: '2-digit', month: 'short' })}`;
+    };
+
     // triple tap on avtar for emergency trigger
     const handleAvatarTap = () => {
         const newCount = avatarTapCount + 1;
@@ -236,7 +255,7 @@ const Chat = ({ onEmergency }) => {
             });
             setMessages([]); // set all message to zero (clr all msg)
             setShowEmergency(false);
-            await(logout) // after clr all msg logout app 
+            await (logout) // after clr all msg logout app 
         } catch (err) {
             console.error('Delete all error:', err);
         }
@@ -316,8 +335,12 @@ const Chat = ({ onEmergency }) => {
                             ...styles.headerStatus,
                             color: isOtherOnline ? '#00a884' : '#8696a0'
                         }}>
-                            {isOtherOnline ? 'online' : 'offline'}
-                            {otherMood ? ` • ${otherMood}` : ''}
+                            {isOtherOnline
+                                ? `online${otherMood ? ` • ${otherMood}` : ''}`
+                                : lastSeen
+                                    ? formatLastSeen(lastSeen)
+                                    : 'offline'
+                            }
                         </div>
                     </div>
                 </div>
