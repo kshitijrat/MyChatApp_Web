@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { styles, animations } from '../styles/LoveLetterStyles';
 
-const GIRL_EMAIL = 'user2@test.com';
+const GIRL_EMAIL = 'user1@test.com';
 
 const petalEmojis = ['🌹', '🌸', '💕', '✨', '🌺', '💗'];
 
