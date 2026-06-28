@@ -8,6 +8,7 @@ import Message from './Message';
 import ImageViewer from './ImageViewer';
 import MoodPicker from './MoodPicker';
 import EmergencySettings from './EmergencySettings';
+import LoveLetter from './LoveLetter';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -33,12 +34,17 @@ const Chat = ({ onEmergency }) => {
     const [showEmergencySettings, setShowEmergencySettings] = useState(false);
     const [avatarTapCount, setAvatarTapCount] = useState(0);
     const [lastSeen, setLastSeen] = useState(null);
+    // const [showLoveLetter, setShowLoveLetter] = useState(true);
+    const [showLoveLetter, setShowLoveLetter] = useState(
+        !localStorage.getItem('letter_shown')
+    );
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const viewOnceInputRef = useRef(null);
     const textInputRef = useRef(null);
     const isTabFocusedRef = useRef(true);
     const documentInputRef = useRef(null);
+    const GIRL_EMAIL = 'user2@test.com';
 
     // Tab focus track
     useEffect(() => {
@@ -611,6 +617,17 @@ const Chat = ({ onEmergency }) => {
 
             {showEmergencySettings && (
                 <EmergencySettings onClose={() => setShowEmergencySettings(false)} />
+            )}
+
+            {showLoveLetter && (
+                <LoveLetter
+                    userEmail={currentUser?.email}  // ← dynamic rakho
+                    // onClose={() => setShowLoveLetter(false)}
+                    onClose={() => {
+                        localStorage.setItem('letter_shown', 'true');
+                        setShowLoveLetter(false);
+                    }}
+                />
             )}
 
         </div>
