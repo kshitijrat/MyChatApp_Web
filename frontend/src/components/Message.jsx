@@ -217,6 +217,37 @@ const Message = ({
 
   if (msg.deletedFor?.includes(currentUser?.uid)) return null;
 
+  if (msg.type === "system") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+          margin: "16px 0",
+          padding: "0 20px",
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
+            color: "#f87171",
+            fontSize: "12px",
+            fontWeight: "500",
+            padding: "6px 16px",
+            borderRadius: "20px",
+            letterSpacing: "0.3px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          }}
+        >
+          🤫 {msg.text}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={wrapperRef}

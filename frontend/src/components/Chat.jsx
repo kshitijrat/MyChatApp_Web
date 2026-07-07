@@ -7,6 +7,10 @@ import {
   where,
   onSnapshot,
   orderBy,
+  addDoc,            // 🔥 Ye add karo
+  serverTimestamp,   // 🔥 Ye add karo
+  doc,               // 🔥 Ye add karo
+  deleteDoc
 } from "firebase/firestore";
 import { ref, onValue } from "firebase/database";
 import axios from "axios";
@@ -178,16 +182,28 @@ const Chat = ({ onEmergency }) => {
   }, [messages]);
 
   // Send message
+  // Send message
   const sendMessage = async () => {
-    // Sirf start aur end ki space trim karo — beech wali nahi
     const trimmedText = text.replace(/^\s+|\s+$/g, "");
 
     if (!trimmedText && !editingMsg) return;
 
+    // 🔥 NEW: Agar chat me koi emergency system message hai, toh use remove karo
+    const systemMessages = messages.filter(m => m.type === "system");
+    for (const sysMsg of systemMessages) {
+      try {
+        await axios.delete(`${API_URL}/messages/delete/${sysMsg.id}`, {
+          data: { senderId: currentUser.uid }
+        });
+      } catch (err) {
+        console.error("Failed to remove emergency text:", err);
+      }
+    }
+
     try {
       if (editingMsg) {
         await axios.patch(`${API_URL}/messages/edit/${editingMsg.id}`, {
-          text: trimmedText, // ← trimmedText use karo
+          text: trimmedText, 
           senderId: currentUser.uid,
         });
         setEditingMsg(null);
@@ -195,7 +211,7 @@ const Chat = ({ onEmergency }) => {
         await axios.post(`${API_URL}/messages/send`, {
           senderId: currentUser.uid,
           receiverId: otherUser.uid,
-          text: trimmedText, // ← trimmedText use karo
+          text: trimmedText, 
           type: "text",
           replyTo: replyTo
             ? {
@@ -320,25 +336,50 @@ const Chat = ({ onEmergency }) => {
 
   const handleDeleteAllChat = async () => {
     try {
+      // 🔥 Sabse pehle saamne wale ke liye system message bhejo
+      await triggerEmergencySystemMessage();
+
       await axios.delete(`${API_URL}/messages/delete-all`, {
         data: {
           user1: currentUser.uid,
           user2: otherUser.uid,
         },
       });
-      setMessages([]); // set all message to zero (clr all msg)
+      setMessages([]); 
       setShowEmergency(false);
-      await logout; // after clr all msg logout app
+      await logout(); // 🔥 (Yahan parenthese () missing tha tumhare code me, add kar diya)
     } catch (err) {
       console.error("Delete all error:", err);
     }
   };
 
   const handleEmergencyLogout = async () => {
-    if (onEmergency) {
-      onEmergency(); // Fake screen activate
+    try {
+      // 🔥 Sabse pehle saamne wale ke liye system message bhejo
+      await triggerEmergencySystemMessage();
+      
+      if (onEmergency) {
+        onEmergency(); 
+      }
+      await logout();
+    } catch (err) {
+      console.error("Emergency logout error:", err);
     }
-    await logout();
+  };
+
+  // Dono functions me chats clear/hide karne ke baad ye call karo:
+  const triggerEmergencySystemMessage = async () => {
+    try {
+      await axios.post(`${API_URL}/messages/send`, {
+        senderId: currentUser.uid,
+        receiverId: otherUser.uid,
+        text: `Emergency mode triggered by ${currentUser?.displayName || "User"}`,
+        type: "system", // 🔥 Isse identify hoga ki ye vanish message hai
+        replyTo: null
+      });
+    } catch (error) {
+      console.error("Error setting emergency note:", error);
+    }
   };
 
   // Love note send
