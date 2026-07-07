@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { styles, animations } from '../styles/LoveLetterStyles';
+import { useState } from "react";
+import { styles, animations } from "../styles/LoveLetterStyles";
 
-const GIRL_EMAIL = 'user1@test.com';
+const GIRL_EMAIL = "user1@test.com";
 
-const petalEmojis = ['🌹', '🌸', '💕', '✨', '🌺', '💗'];
+const petalEmojis = ["🌹", "🌸", "💕", "✨", "🌺", "💗"];
 
 // Component ke bahar — static array
 const PETALS = Array.from({ length: 20 }, (_, i) => ({
@@ -12,7 +12,7 @@ const PETALS = Array.from({ length: 20 }, (_, i) => ({
   duration: 4 + Math.random() * 5,
   delay: `${Math.random() * 6}s`,
   emoji: petalEmojis[Math.floor(Math.random() * petalEmojis.length)],
-  size: `${16 + Math.random() * 14}px`
+  size: `${16 + Math.random() * 14}px`,
 }));
 
 const funnyMessages = [
@@ -26,24 +26,26 @@ const funnyMessages = [
 ];
 
 const RosePetal = ({ style }) => (
-  <div style={{
-    position: 'fixed',
-    fontSize: style.size,
-    animation: `fall ${style.duration}s linear infinite`,
-    left: style.left,
-    top: '-40px',
-    animationDelay: style.delay,
-    zIndex: 1000,
-    pointerEvents: 'none',
-    filter: 'drop-shadow(0 2px 4px rgba(255,107,157,0.4))'
-  }}>
+  <div
+    style={{
+      position: "fixed",
+      fontSize: style.size,
+      animation: `fall ${style.duration}s linear infinite`,
+      left: style.left,
+      top: "-40px",
+      animationDelay: style.delay,
+      zIndex: 1000,
+      pointerEvents: "none",
+      filter: "drop-shadow(0 2px 4px rgba(255,107,157,0.4))",
+    }}
+  >
     {style.emoji}
   </div>
 );
 
 const LoveLetter = ({ onClose, userEmail }) => {
   const [showToast, setShowToast] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
+  const [toastMsg, setToastMsg] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [notClickCount, setNotClickCount] = useState(0);
 
@@ -53,7 +55,7 @@ const LoveLetter = ({ onClose, userEmail }) => {
     const msg = funnyMessages[notClickCount % funnyMessages.length];
     setToastMsg(msg);
     setShowToast(true);
-    setNotClickCount(prev => prev + 1);
+    setNotClickCount((prev) => prev + 1);
     setTimeout(() => setShowToast(false), 3000);
   };
 
@@ -67,42 +69,40 @@ const LoveLetter = ({ onClose, userEmail }) => {
       <style>{animations}</style>
 
       {/* Rose Petals */}
-      {PETALS.map(petal => (
+      {PETALS.map((petal) => (
         <RosePetal key={petal.id} style={petal} />
       ))}
 
       {!accepted ? (
         <div style={styles.card}>
-
           {/* Heart */}
           <div style={styles.heartContainer}>
             <span style={styles.heart}>💝</span>
           </div>
 
           {/* Title */}
-          <h1 style={styles.title}>My Dearest Love</h1>
-          <div style={styles.divider}>✦ 🌹 ✦</div>
+          {/* Title */}
+          <h1 style={styles.title}>Dearest Cutie-Pie 👑</h1>
+          <div style={styles.divider}>✨ 💖 ✨</div>
 
           {/* Letter */}
           <div style={styles.letterContent}>
             <p style={styles.para}>
-              Mere pyaarii cutiee, main jaanta hoon maine bahut galtiyan ki hain,
-              aur kuch aisi baatein kahi jo nahi kehni chahiye thi. 💔
+              Koi wajah nahi hai, aur na hi koi panga hua hai... Bas
+              baithe-baithe tumhari yaad aa rahi thi, toh socha thoda pyaar jata
+              doon! 🥰
             </p>
             <p style={styles.para}>
-              Par ek baat hamesha sach rahi hai — tum meri zindagi ka
-              sabse khoobsurat hissa ho. Tumhare bina yeh sab adhura lagta hai. 🥺
+              Sach batau? Tum poore brahmand ki sabse zyada cute, thodi si pagal
+              aur meri sabse favourite insaan ho. Tumhari smile dekh kar hi mera
+              boring se boring din bhi ekdum blockbuster ban jata hai. ✨
             </p>
             <p style={styles.para}>
-              Main jaanta hoon sorry kehna kaafi nahi hota, isliye maine
-              yeh app bhi sirf tumhare liye banaya — kyunki tum special ho,
-              aur tum deserve karti ho sab kuch best. 💕
+              Yeh chota sa app bas tumhare liye ek mini-surprise hai, taaki jab
+              bhi tum ise kholo, tumhe pata rahe ki koi hamesha tumhare nakhre
+              uthane ke liye ready baitha hai! 🌹
             </p>
-            <p style={styles.para}>
-              Main promise karta hoon
-              is baar sab theek karunga. 🌹
-            </p>
-            <p style={styles.sign}>— Tumhara, hamesha ❤️</p>
+            <p style={styles.sign}>— Tumhara apna fixed asset 🤵‍♂️❤️</p>
           </div>
 
           {/* Buttons */}
@@ -114,7 +114,6 @@ const LoveLetter = ({ onClose, userEmail }) => {
               ❌ Not Now
             </button>
           </div>
-
         </div>
       ) : (
         <div style={styles.acceptedCard}>
@@ -128,10 +127,7 @@ const LoveLetter = ({ onClose, userEmail }) => {
       )}
 
       {/* Toast */}
-      {showToast && (
-        <div style={styles.toast}>{toastMsg}</div>
-      )}
-
+      {showToast && <div style={styles.toast}>{toastMsg}</div>}
     </div>
   );
 };

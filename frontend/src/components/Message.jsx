@@ -1,42 +1,43 @@
-import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
+import { useEffect, useState, useRef } from "react";
+import axios from "axios";
 
-// const API_URL = 'http://localhost:5000/api';
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOnce, onSeen }) => {
-  const [showActions, setShowActions] = useState(false);
-  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+const Message = ({
+  msg,
+  isOwn,
+  currentUser,
+  otherUser,
+  onReply,
+  onEdit,
+  onViewOnce,
+  onSeen,
+}) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [viewOnceOpened, setViewOnceOpened] = useState(msg.viewed);
-  const deleteMenuRef = useRef(null);
   const [loveNoteOpen, setLoveNoteOpen] = useState(false);
-  const [countdown, setCountdown] = useState(600); // 10 min = 600 seconds
+  const [countdown, setCountdown] = useState(600);
+  const [swipeX, setSwipeX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [showReplyHint, setShowReplyHint] = useState(false);
 
-  // Seen status update
+  const menuRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const wrapperRef = useRef(null);
+
+  // Seen update
   useEffect(() => {
-    if (!isOwn && msg.status !== 'seen') {
-      onSeen();
-    }
+    if (!isOwn && msg.status !== "seen") onSeen();
   }, [msg.id]);
 
-  // Outside click se delete menu band karo
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (deleteMenuRef.current && !deleteMenuRef.current.contains(e.target)) {
-        setShowDeleteMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-
-  // Love note count down effect
+  // Countdown for love note
   useEffect(() => {
     if (!loveNoteOpen) return;
-
     const timer = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           setLoveNoteOpen(false);
@@ -45,11 +46,108 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [loveNoteOpen]);
 
-  // View once handle
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+    };
+  }, []);
+
+  // Long press handlers
+  const handleTouchStart = (e) => {
+    // const touch = e.touches[0];
+    // touchStartX.current = touch.clientX;
+    // touchStartY.current = touch.clientY;
+
+    longPressTimer.current = setTimeout(() => {
+      // setMenuPos({ x: touch.clientX, y: touch.clientY });
+      setShowMenu(true);
+      // Vibration on long press
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
+
+  // Swipe to reply
+  const handleSwipeTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setIsSwiping(true);
+  };
+
+  const handleSwipeTouchMove = (e) => {
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+
+    // Sirf horizontal swipe allow karo
+    if (Math.abs(dy) > Math.abs(dx)) return;
+
+    // Right swipe only — max 80px
+    if (dx > 0 && dx < 80) {
+      setSwipeX(dx);
+      if (dx > 50) setShowReplyHint(true);
+      else setShowReplyHint(false);
+    }
+  };
+
+  const handleSwipeTouchEnd = () => {
+    setIsSwiping(false);
+    if (swipeX > 50) {
+      onReply();
+      if (navigator.vibrate) navigator.vibrate(30);
+    }
+    setSwipeX(0);
+    setShowReplyHint(false);
+
+    // Long press cancel
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
+
+  // Desktop right click
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    // setMenuPos({ x: e.clientX, y: e.clientY });
+    setShowMenu(true);
+  };
+
+  // Delete handlers
+  const handleDeleteForMe = async () => {
+    try {
+      await axios.patch(`${API_URL}/messages/delete-for-me/${msg.id}`, {
+        userId: currentUser.uid,
+      });
+      setShowMenu(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteForEveryone = async () => {
+    try {
+      await axios.delete(`${API_URL}/messages/delete-for-everyone/${msg.id}`, {
+        data: { senderId: currentUser.uid },
+      });
+      setShowMenu(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // View once
   const handleViewOnce = async () => {
     if (viewOnceOpened) return;
     setViewOnceOpened(true);
@@ -57,11 +155,11 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
     try {
       await axios.patch(`${API_URL}/messages/view-once/${msg.id}`);
     } catch (err) {
-      console.error('View once error:', err);
+      console.error(err);
     }
   };
 
-  // Love not Open karo
+  // Love note open
   const handleOpenLoveNote = async () => {
     setLoveNoteOpen(true);
     setCountdown(600);
@@ -72,161 +170,121 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
     }
   };
 
-  // count down display min or second
+  const formatTime = (dateStr) => {
+    return new Date(dateStr).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const formatCountdown = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    if (mins > 0) {
-      return `Disappears in ${mins} min ${secs} sec`;
-    }
-    return `Disappears in ${secs} sec`;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
-  // Delete for me
-  const handleDeleteForMe = async () => {
-    try {
-      await axios.patch(`${API_URL}/messages/delete-for-me/${msg.id}`, {
-        userId: currentUser.uid
-      });
-      setShowDeleteMenu(false);
-    } catch (err) {
-      console.error('Delete for me error:', err);
-    }
-  };
-
-  // Delete for everyone
-  const handleDeleteForEveryone = async () => {
-    try {
-      await axios.delete(`${API_URL}/messages/delete-for-everyone/${msg.id}`, {
-        data: { senderId: currentUser.uid }
-      });
-      setShowDeleteMenu(false);
-    } catch (err) {
-      console.error('Delete for everyone error:', err);
-    }
-  };
-
-  // Time format
-  const formatTime = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const getFileIcon = (fileType) => {
+    if (!fileType) return "📄";
+    if (fileType.includes("pdf")) return "📕";
+    if (fileType.includes("word")) return "📘";
+    if (fileType.includes("excel") || fileType.includes("sheet")) return "📗";
+    if (fileType.includes("powerpoint")) return "📙";
+    if (fileType.includes("zip")) return "🗜️";
+    if (fileType.includes("text")) return "📝";
+    return "📄";
   };
 
   const formatFileSize = (bytes) => {
-    if (!bytes) return '';
+    if (!bytes) return "";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const getFileIcon = (fileType) => {
-    if (!fileType) return '📄';
-    if (fileType.includes('pdf')) return '📕';
-    if (fileType.includes('word')) return '📘';
-    if (fileType.includes('excel') || fileType.includes('sheet')) return '📗';
-    if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📙';
-    if (fileType.includes('zip')) return '🗜️';
-    if (fileType.includes('text')) return '📝';
-    return '📄';
-  };
-
-  // Status ticks
   const renderStatus = () => {
     if (!isOwn) return null;
     switch (msg.status) {
-      case 'sent':
-        return <span style={styles.statusTick}>✓</span>;
-      case 'delivered':
-        return <span style={styles.statusTick}>✓✓</span>;
-      case 'seen':
-        return <span style={{ ...styles.statusTick, color: '#53bdeb' }}>✓✓</span>;
+      case "sent":
+        return <span style={styles.tick}>✓</span>;
+      case "delivered":
+        return <span style={styles.tick}>✓✓</span>;
+      case "seen":
+        return <span style={{ ...styles.tick, color: "#a78bfa" }}>✓✓</span>;
       default:
         return null;
     }
   };
 
-  // Agar deleted for me hai toh hide karo
-  if (msg.deletedFor?.includes(currentUser?.uid)) {
-    return null;
-  }
+  if (msg.deletedFor?.includes(currentUser?.uid)) return null;
 
   return (
     <div
+      ref={wrapperRef}
+      className={`message-wrapper ${isSwiping ? "swiping" : ""}`}
       style={{
-        ...styles.wrapper,
-        justifyContent: isOwn ? 'flex-end' : 'flex-start'
+        display: "flex",
+        justifyContent: isOwn ? "flex-end" : "flex-start",
+        marginBottom: "6px",
+        padding: "0 12px",
+        transform: `translateX(${swipeX}px)`,
+        position: "relative",
       }}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => {
-        setShowActions(false);
-        if (!showDeleteMenu) setShowActions(false);
+      onTouchStart={(e) => {
+        handleTouchStart(e);
+        handleSwipeTouchStart(e);
       }}
+      onTouchMove={handleSwipeTouchMove}
+      onTouchEnd={(e) => {
+        handleTouchEnd();
+        handleSwipeTouchEnd();
+      }}
+      onContextMenu={handleContextMenu}
     >
-
-      {/* Action buttons */}
-      {showActions && (
-        <div style={{
-          ...styles.actions,
-          order: isOwn ? 0 : 1,
-          marginRight: isOwn ? '8px' : '0',
-          marginLeft: isOwn ? '0' : '8px'
-        }}>
-          <button style={styles.actionBtn} onClick={onReply} title="Reply">↩</button>
-          {isOwn && msg.type === 'text' && !msg.deletedForEveryone && (
-            <button style={styles.actionBtn} onClick={onEdit} title="Edit">✏️</button>
-          )}
-          <div style={{ position: 'relative' }} ref={deleteMenuRef}>
-            <button
-              style={styles.actionBtn}
-              onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-              title="Delete"
-            >
-              🗑️
-            </button>
-
-            {/* Delete menu */}
-            {showDeleteMenu && (
-              <div style={{
-                ...styles.deleteMenu,
-                right: isOwn ? '0' : 'auto',
-                left: isOwn ? 'auto' : '0'
-              }}>
-                <button
-                  style={styles.deleteMenuItem}
-                  onClick={handleDeleteForMe}
-                >
-                  Delete for me
-                </button>
-                {isOwn && (
-                  <button
-                    style={{ ...styles.deleteMenuItem, color: '#ef4444' }}
-                    onClick={handleDeleteForEveryone}
-                  >
-                    Delete for everyone
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+      {/* Reply hint icon */}
+      {showReplyHint && (
+        <div
+          style={{
+            position: "absolute",
+            left: isOwn ? "auto" : "-10px",
+            right: isOwn ? "-10px" : "auto",
+            top: "50%",
+            transform: "translateY(-50%)",
+            fontSize: "18px",
+            opacity: swipeX / 80,
+            transition: "opacity 0.1s",
+          }}
+        >
+          ↩
         </div>
       )}
 
       {/* Message bubble */}
-      <div style={{
-        ...styles.bubble,
-        background: isOwn ? '#005c4b' : '#202c33',
-        borderRadius: isOwn
-          ? '12px 12px 0px 12px'
-          : '12px 12px 12px 0px'
-      }}>
-
+      <div
+        style={{
+          maxWidth: "70%",
+          padding: "10px 14px",
+          borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+          background: isOwn
+            ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)"
+            : "linear-gradient(135deg, #1e1b4b 0%, #1a1744 100%)",
+          boxShadow: isOwn
+            ? "0 4px 15px rgba(79,70,229,0.3)"
+            : "0 4px 15px rgba(0,0,0,0.3)",
+          border: isOwn
+            ? "1px solid rgba(167,139,250,0.2)"
+            : "1px solid rgba(99,102,241,0.15)",
+          position: "relative",
+        }}
+      >
         {/* Reply preview */}
         {msg.replyTo && (
           <div style={styles.replyPreview}>
             <div style={styles.replyLine} />
             <div style={styles.replyContent}>
               <span style={styles.replyName}>
-                {msg.replyTo.senderId === currentUser?.uid ? 'You' : otherUser?.displayName}
+                {msg.replyTo.senderId === currentUser?.uid
+                  ? "You"
+                  : otherUser?.displayName}
               </span>
               <span style={styles.replyText}>
                 {msg.replyTo.text?.slice(0, 60)}
@@ -238,13 +296,13 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
         {/* Deleted for everyone */}
         {msg.deletedForEveryone ? (
           <div style={styles.deletedText}>
-            🚫 {isOwn ? 'You deleted this message' : 'This message was deleted'}
+            🚫 {isOwn ? "You deleted this message" : "This message was deleted"}
           </div>
         ) : (
           <>
-            {/* Text message */}
-            {msg.type === 'text' && (
-              <div style={styles.messageText}>
+            {/* Text */}
+            {msg.type === "text" && (
+              <div style={{ ...styles.msgText, whiteSpace: "pre-wrap" }}>
                 {msg.text}
                 {msg.isEdited && (
                   <span style={styles.editedTag}> (edited)</span>
@@ -252,79 +310,69 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
               </div>
             )}
 
-            {/* Permanent image */}
-            {msg.type === 'image' && msg.imageUrl && (
-              <div style={styles.imageContainer}>
-                <img src={msg.imageUrl} alt="sent" style={styles.image} />
-              </div>
+            {/* Image */}
+            {msg.type === "image" && msg.imageUrl && (
+              <img src={msg.imageUrl} alt="sent" style={styles.image} />
             )}
 
             {/* Document */}
-            {/* Document */}
-            {msg.type === 'document' && msg.imageUrl && (
-
-              <a href={msg.imageUrl}
+            {msg.type === "document" && msg.imageUrl && (
+              <a
+                href={msg.imageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={msgStyles.documentContainer}
+                style={styles.documentContainer}
               >
-                <div style={msgStyles.documentIcon}>
+                <div style={styles.documentIcon}>
                   {getFileIcon(msg.fileType)}
                 </div>
-                <div style={msgStyles.documentInfo}>
-                  <div style={msgStyles.documentName}>
-                    {msg.fileName || 'Document'}
+                <div style={styles.documentInfo}>
+                  <div style={styles.documentName}>
+                    {msg.fileName || "Document"}
                   </div>
-                  <div style={msgStyles.documentSize}>
+                  <div style={styles.documentSize}>
                     {formatFileSize(msg.fileSize)} • Tap to open
                   </div>
                 </div>
-                <div style={msgStyles.downloadIcon}>⬇️</div>
+                <span style={styles.downloadIcon}>⬇️</span>
               </a>
             )}
 
             {/* View once */}
-            {msg.type === 'view_once' && (
-              <div style={styles.viewOnceContainer}>
+            {msg.type === "view_once" && (
+              <div>
                 {viewOnceOpened || msg.viewed ? (
-                  <div style={styles.viewOnceOpened}>
-                    <span>👁️</span>
-                    <span style={styles.viewOnceText}>Opened</span>
-                  </div>
+                  <div style={styles.viewOnceOpened}>👁️ Opened</div>
                 ) : (
                   <button
                     style={styles.viewOnceBtn}
                     onClick={isOwn ? null : handleViewOnce}
                     disabled={isOwn}
                   >
-                    <span style={styles.viewOnceIcon}>👁️</span>
-                    <span style={styles.viewOnceBtnText}>
-                      {isOwn ? 'View Once Sent' : 'Tap to View'}
-                    </span>
+                    👁️ {isOwn ? "View Once Sent" : "Tap to View"}
                   </button>
                 )}
               </div>
             )}
 
-
-            {/* Love Note */}
-            {msg.type === 'love_note' && (
-              <div style={msgStyles.loveNoteContainer}>
+            {/* Love note */}
+            {msg.type === "love_note" && (
+              <div style={styles.loveNoteContainer}>
                 {isOwn ? (
-                  <div style={msgStyles.loveNoteTag}>💌 Secret Love Note Sent</div>
+                  <div style={styles.loveNoteTag}>💌 Secret Love Note Sent</div>
                 ) : msg.viewed && !loveNoteOpen ? (
-                  <div style={msgStyles.loveNoteViewed}>💌 Love note opened</div>
+                  <div style={styles.loveNoteViewed}>💌 Love note opened</div>
                 ) : loveNoteOpen ? (
                   <>
-                    <div style={msgStyles.loveNoteTag}>💌 Secret Love Note</div>
-                    <div style={msgStyles.loveNoteText}>{msg.text}</div>
-                    <div style={msgStyles.loveNoteTimer}>
-                      ⏳ {formatCountdown(countdown)}
+                    <div style={styles.loveNoteTag}>💌 Secret Love Note</div>
+                    <div style={styles.loveNoteText}>{msg.text}</div>
+                    <div style={styles.loveNoteTimer}>
+                      ⏳ Disappears in {formatCountdown(countdown)}
                     </div>
                   </>
                 ) : (
                   <button
-                    style={msgStyles.loveNoteReadBtn}
+                    style={styles.loveNoteReadBtn}
                     onClick={handleOpenLoveNote}
                   >
                     💌 Open Secret Note
@@ -332,10 +380,6 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
                 )}
               </div>
             )}
-
-
-
-
           </>
         )}
 
@@ -344,250 +388,220 @@ const Message = ({ msg, isOwn, currentUser, otherUser, onReply, onEdit, onViewOn
           <span style={styles.time}>{formatTime(msg.createdAt)}</span>
           {renderStatus()}
         </div>
-
       </div>
-    </div >
+
+      {/* Context Menu */}
+      {showMenu && (
+        <div
+          ref={menuRef}
+          style={{
+            ...styles.menu,
+            position: "absolute",
+            bottom: "2%",
+            right: isOwn ? 10 : "auto",
+            left: isOwn ? "auto" : 10,
+
+            zIndex: 999,
+            marginTop: "4px",
+          }}
+        >
+          <button
+            style={styles.menuItem}
+            onClick={() => {
+              onReply();
+              setShowMenu(false);
+            }}
+          >
+            <span>↩</span> Reply
+          </button>
+
+          {isOwn && msg.type === "text" && !msg.deletedForEveryone && (
+            <button
+              style={styles.menuItem}
+              onClick={() => {
+                onEdit();
+                setShowMenu(false);
+              }}
+            >
+              <span>✏️</span> Edit
+            </button>
+          )}
+
+          <button style={styles.menuItem} onClick={handleDeleteForMe}>
+            <span>🗑️</span> Delete for me
+          </button>
+
+          {isOwn && (
+            <button
+              style={{ ...styles.menuItem, color: "#f87171" }}
+              onClick={handleDeleteForEveryone}
+            >
+              <span>❌</span> Delete for everyone
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
 const styles = {
-  wrapper: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    marginBottom: '4px',
-    padding: '0 8px'
-  },
-  actions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
-  },
-  actionBtn: {
-    background: '#2a3942',
-    border: 'none',
-    borderRadius: '50%',
-    width: '28px',
-    height: '28px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  deleteMenu: {
-    position: 'absolute',
-    bottom: '32px',
-    background: '#233138',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-    zIndex: 100,
-    minWidth: '160px',
-    overflow: 'hidden'
-  },
-  deleteMenuItem: {
-    display: 'block',
-    width: '100%',
-    padding: '10px 16px',
-    background: 'transparent',
-    border: 'none',
-    color: '#e9edef',
-    fontSize: '13px',
-    cursor: 'pointer',
-    textAlign: 'left'
-  },
-  bubble: {
-    maxWidth: '65%',
-    padding: '8px 12px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
-  },
+  tick: { fontSize: "11px", color: "rgba(255,255,255,0.5)" },
   replyPreview: {
-    display: 'flex',
-    background: 'rgba(0,0,0,0.2)',
-    borderRadius: '8px',
-    marginBottom: '6px',
-    overflow: 'hidden'
+    display: "flex",
+    background: "rgba(0,0,0,0.2)",
+    borderRadius: "8px",
+    marginBottom: "6px",
+    overflow: "hidden",
   },
-  replyLine: {
-    width: '3px',
-    background: '#00a884',
-    flexShrink: 0
-  },
+  replyLine: { width: "3px", background: "#a78bfa", flexShrink: 0 },
   replyContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '4px 8px',
-    gap: '2px'
+    display: "flex",
+    flexDirection: "column",
+    padding: "4px 8px",
+    gap: "2px",
   },
-  replyName: {
-    fontSize: '12px',
-    color: '#00a884',
-    fontWeight: '600'
-  },
-  replyText: {
-    fontSize: '12px',
-    color: '#8696a0'
-  },
+  replyName: { fontSize: "11px", color: "#a78bfa", fontWeight: "600" },
+  replyText: { fontSize: "12px", color: "rgba(255,255,255,0.6)" },
   deletedText: {
-    fontSize: '13px',
-    color: '#8696a0',
-    fontStyle: 'italic'
+    fontSize: "13px",
+    color: "rgba(255,255,255,0.4)",
+    fontStyle: "italic",
   },
-  messageText: {
-    fontSize: '14px',
-    color: '#e9edef',
-    lineHeight: '1.5',
-    wordBreak: 'break-word'
+  msgText: {
+    fontSize: "15px",
+    color: "#f1f5f9",
+    lineHeight: "1.5",
+    wordBreak: "break-word",
+    whiteSpace: "pre-wrap",
   },
   editedTag: {
-    fontSize: '11px',
-    color: '#8696a0',
-    fontStyle: 'italic'
-  },
-  imageContainer: {
-    borderRadius: '8px',
-    overflow: 'hidden',
-    maxWidth: '280px'
+    fontSize: "11px",
+    color: "rgba(255,255,255,0.4)",
+    fontStyle: "italic",
   },
   image: {
-    width: '100%',
-    display: 'block',
-    borderRadius: '8px'
-  },
-  viewOnceContainer: {
-    padding: '4px 0'
-  },
-  viewOnceBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: 'rgba(0,168,132,0.15)',
-    border: '1px solid #00a884',
-    borderRadius: '8px',
-    padding: '10px 16px',
-    cursor: 'pointer',
-    width: '100%'
-  },
-  viewOnceIcon: {
-    fontSize: '20px'
-  },
-  viewOnceBtnText: {
-    color: '#00a884',
-    fontSize: '14px',
-    fontWeight: '600'
-  },
-  viewOnceOpened: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    opacity: 0.5
-  },
-  viewOnceText: {
-    color: '#8696a0',
-    fontSize: '14px'
-  },
-  footer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: '4px',
-    marginTop: '4px'
-  },
-  time: {
-    fontSize: '11px',
-    color: '#8696a0'
-  },
-  statusTick: {
-    fontSize: '12px',
-    color: '#8696a0'
-  }
-};
-
-
-const msgStyles = {
-  loveNoteContainer: {
-    background: 'linear-gradient(135deg, #1a0a0f, #0f0f23)',
-    border: '1px solid #ff6b9d60',
-    borderRadius: '12px',
-    padding: '12px',
-    maxWidth: '260px',
-    boxShadow: '0 0 20px rgba(255,107,157,0.15)'
-  },
-  loveNoteTag: {
-    color: '#ff6b9d',
-    fontSize: '12px',
-    fontWeight: '700',
-    marginBottom: '8px',
-    letterSpacing: '0.5px'
-  },
-  loveNoteText: {
-    color: '#e9edef',
-    fontSize: '14px',
-    lineHeight: '1.6',
-    marginBottom: '10px'
-  },
-  loveNoteReadBtn: {
-    width: '100%',
-    background: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '8px',
-    color: '#fff',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer'
-  },
-  loveNoteViewed: {
-    color: '#8696a0',
-    fontSize: '13px',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: '4px'
-  },
-  loveNoteTimer: {
-    color: '#747071',
-    fontSize: '11px',
-    marginTop: '8px',
-    fontStyle: 'italic',
-    textAlign: 'right',
-    fontWeight: '600'
+    width: "100%",
+    maxWidth: "260px",
+    borderRadius: "12px",
+    display: "block",
   },
   documentContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    background: 'rgba(0,0,0,0.2)',
-    borderRadius: '10px',
-    padding: '10px',
-    textDecoration: 'none',
-    minWidth: '200px',
-    maxWidth: '260px'
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    background: "rgba(0,0,0,0.2)",
+    borderRadius: "10px",
+    padding: "10px",
+    textDecoration: "none",
+    minWidth: "180px",
+    maxWidth: "240px",
   },
-  documentIcon: {
-    fontSize: '32px',
-    flexShrink: 0
-  },
-  documentInfo: {
-    flex: 1,
-    overflow: 'hidden'
-  },
+  documentIcon: { fontSize: "28px", flexShrink: 0 },
+  documentInfo: { flex: 1, overflow: "hidden" },
   documentName: {
-    color: '#e9edef',
-    fontSize: '13px',
-    fontWeight: '600',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap'
+    color: "#f1f5f9",
+    fontSize: "13px",
+    fontWeight: "600",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   documentSize: {
-    color: '#8696a0',
-    fontSize: '11px',
-    marginTop: '2px'
+    color: "rgba(255,255,255,0.5)",
+    fontSize: "11px",
+    marginTop: "2px",
   },
-  downloadIcon: {
-    fontSize: '16px',
-    flexShrink: 0
-  }
+  downloadIcon: { fontSize: "16px", flexShrink: 0 },
+  viewOnceBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "rgba(167,139,250,0.15)",
+    border: "1px solid rgba(167,139,250,0.4)",
+    borderRadius: "8px",
+    padding: "10px 16px",
+    cursor: "pointer",
+    color: "#a78bfa",
+    fontSize: "14px",
+    fontWeight: "600",
+    width: "100%",
+  },
+  viewOnceOpened: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: "13px",
+    padding: "4px 0",
+  },
+  loveNoteContainer: { padding: "4px 0" },
+  loveNoteTag: {
+    color: "#f472b6",
+    fontSize: "12px",
+    fontWeight: "700",
+    marginBottom: "6px",
+  },
+  loveNoteText: {
+    color: "#f1f5f9",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    marginBottom: "8px",
+  },
+  loveNoteTimer: {
+    color: "#f472b6",
+    fontSize: "11px",
+    fontStyle: "italic",
+    textAlign: "right",
+  },
+  loveNoteReadBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "rgba(244,114,182,0.15)",
+    border: "1px solid rgba(244,114,182,0.4)",
+    borderRadius: "8px",
+    padding: "10px 16px",
+    cursor: "pointer",
+    color: "#f472b6",
+    fontSize: "14px",
+    fontWeight: "600",
+    width: "100%",
+  },
+  loveNoteViewed: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: "13px",
+    padding: "4px 0",
+  },
+  footer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: "4px",
+    marginTop: "6px",
+  },
+  time: { fontSize: "10px", color: "rgba(255,255,255,0.4)" },
+  menu: {
+    background: "#1e1b4b",
+    border: "1px solid rgba(99,102,241,0.3)",
+    borderRadius: "14px",
+    overflow: "hidden",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.1)",
+    animation: "menuFadeIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+    minWidth: "170px",
+  },
+  menuItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    width: "100%",
+    padding: "12px 16px",
+    background: "transparent",
+    border: "none",
+    color: "#e9edef",
+    fontSize: "14px",
+    cursor: "pointer",
+    textAlign: "left",
+    borderBottom: "1px solid rgba(99,102,241,0.1)",
+    transition: "background 0.15s",
+  },
 };
 
 export default Message;

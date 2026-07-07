@@ -1,76 +1,72 @@
 export const styles = {
   overlay: {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    background: 'linear-gradient(135deg, #0d0015 0%, #1a0028 50%, #0d0015 100%)',
-    zIndex: 500, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', padding: '16px',
-    overflowY: 'auto'
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(10, 5, 18, 0.85)',
+    backdropFilter: 'blur(16px)',
+    zIndex: 1500,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px'
   },
   card: {
-    background: 'linear-gradient(160deg, #1e0a2e 0%, #12001f 60%, #1a0015 100%)',
-    border: '1px solid rgba(255,107,157,0.3)',
-    borderRadius: '28px', padding: '36px 24px',
-    width: '100%', maxWidth: '400px',
-    boxShadow: `
-      0 0 0 1px rgba(255,107,157,0.1),
-      0 20px 60px rgba(255,107,157,0.2),
-      0 0 100px rgba(255,107,157,0.1),
-      inset 0 1px 0 rgba(255,255,255,0.05)
-    `,
-    animation: 'fadeInCard 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    position: 'relative', zIndex: 1001,
-    backdropFilter: 'blur(20px)'
+    background: 'linear-gradient(145deg, #251125 0%, #0e0716 100%)',
+    border: '1px solid rgba(255, 107, 157, 0.25)',
+    borderRadius: '28px',
+    padding: '32px 24px',
+    width: '100%',
+    maxWidth: '420px',
+    textAlign: 'center',
+    boxShadow: '0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(255, 107, 157, 0.15)',
+    animation: 'scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
   },
   heartContainer: {
-    textAlign: 'center', marginBottom: '20px'
-  },
-  heart: {
-    fontSize: '64px',
-    display: 'inline-block',
-    animation: 'heartbeat 1.5s ease infinite',
-    filter: 'drop-shadow(0 0 20px rgba(255,107,157,0.8))'
+    fontSize: '50px',
+    marginBottom: '10px',
+    animation: 'pulse 1.5s infinite ease-in-out'
   },
   title: {
-    color: '#ff6b9d',
-    fontSize: '26px',
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: '6px',
-    fontFamily: 'Georgia, serif',
-    letterSpacing: '1px',
-    textShadow: '0 0 30px rgba(255,107,157,0.5)'
+    color: '#fff',
+    fontSize: '22px',
+    fontWeight: '800',
+    letterSpacing: '-0.3px',
+    background: 'linear-gradient(45deg, #ff758c 0%, #ff7eb3 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    marginBottom: '8px'
   },
   divider: {
-    textAlign: 'center',
-    color: '#ff6b9d60',
-    fontSize: '18px',
-    marginBottom: '24px',
-    letterSpacing: '8px'
+    color: '#ff6b9d',
+    fontSize: '14px',
+    opacity: 0.8,
+    marginBottom: '20px'
   },
   letterContent: {
-    marginBottom: '28px',
-    background: 'rgba(255,107,157,0.03)',
+    background: 'rgba(255, 255, 255, 0.03)',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    padding: '18px',
     borderRadius: '16px',
-    padding: '20px 16px',
-    border: '1px solid rgba(255,107,157,0.08)'
+    textAlign: 'left',
+    maxHeight: '280px',
+    overflowY: 'auto',
+    marginBottom: '24px',
+    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)'
   },
   para: {
-    color: '#e9edef',
-    fontSize: '15px',
-    lineHeight: '1.9',
-    marginBottom: '16px',
-    textAlign: 'center',
-    fontFamily: 'Georgia, serif',
-    opacity: 0.9
+    color: '#e2e8f0',
+    fontSize: '14px',
+    lineHeight: '1.6',
+    marginBottom: '14px',
+    fontWeight: '400'
   },
   sign: {
-    color: '#ff6b9d',
-    fontSize: '16px',
+    color: '#ff758c',
+    fontSize: '14px',
+    fontWeight: '600',
+    marginTop: '16px',
     textAlign: 'right',
-    fontStyle: 'italic',
-    fontFamily: 'Georgia, serif',
-    marginTop: '8px',
-    textShadow: '0 0 20px rgba(255,107,157,0.4)'
+    fontStyle: 'italic'
   },
   btnContainer: {
     display: 'flex',
@@ -78,131 +74,73 @@ export const styles = {
     gap: '12px'
   },
   acceptBtn: {
-    width: '100%',
-    padding: '16px',
-    background: 'linear-gradient(135deg, #ff6b9d 0%, #ff4d8d 50%, #ff8e53 100%)',
+    background: 'linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)',
+    color: '#fff',
     border: 'none',
     borderRadius: '14px',
-    color: '#fff',
-    fontSize: '17px',
+    padding: '14px',
+    fontSize: '16px',
     fontWeight: '700',
     cursor: 'pointer',
-    boxShadow: '0 8px 25px rgba(255,107,157,0.4)',
-    letterSpacing: '0.5px',
-    transition: 'transform 0.2s, box-shadow 0.2s'
+    boxShadow: '0 6px 20px rgba(255, 94, 98, 0.4)',
+    transition: 'transform 0.2s'
   },
   notBtn: {
-    width: '100%',
-    padding: '14px',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'transparent',
+    color: '#94a3b8',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
     borderRadius: '14px',
-    color: 'rgba(255,255,255,0.2)',
+    padding: '12px',
     fontSize: '14px',
-    cursor: 'not-allowed',
-    letterSpacing: '0.5px'
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
   },
   acceptedCard: {
+    background: 'linear-gradient(145deg, #16222f 0%, #0b1118 100%)',
+    border: '1px solid rgba(52, 211, 153, 0.3)',
+    borderRadius: '28px',
+    padding: '40px 24px',
     textAlign: 'center',
-    animation: 'fadeInCard 0.6s ease',
-    position: 'relative',
-    zIndex: 1001,
-    padding: '20px'
+    maxWidth: '400px',
+    boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(52, 211, 153, 0.15)'
   },
-  acceptedEmoji: {
-    fontSize: '90px',
-    marginBottom: '20px',
-    animation: 'heartbeat 1s ease infinite',
-    display: 'block',
-    filter: 'drop-shadow(0 0 30px rgba(255,107,157,0.8))'
-  },
-  acceptedTitle: {
-    color: '#ff6b9d',
-    fontSize: '36px',
-    fontWeight: '700',
-    marginBottom: '16px',
-    textShadow: '0 0 30px rgba(255,107,157,0.6)'
-  },
-  acceptedText: {
-    color: '#e9edef',
-    fontSize: '18px',
-    marginBottom: '10px',
-    fontFamily: 'Georgia, serif',
-    lineHeight: '1.7'
-  },
-  acceptedSub: {
-    color: '#8696a0',
-    fontSize: '14px',
-    marginTop: '8px'
-  },
+  acceptedEmoji: { fontSize: '64px', display: 'block', marginBottom: '16px' },
+  acceptedTitle: { color: '#34d399', fontSize: '26px', fontWeight: '800', marginBottom: '12px' },
+  acceptedText: { color: '#f1f5f9', fontSize: '15px', lineHeight: '1.6', marginBottom: '8px' },
+  acceptedSub: { color: '#94a3b8', fontSize: '13px' },
   toast: {
     position: 'fixed',
-    bottom: '40px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: 'linear-gradient(135deg, #1e0a2e, #12001f)',
-    border: '1px solid rgba(255,107,157,0.4)',
-    color: '#e9edef',
-    padding: '14px 24px',
-    borderRadius: '14px',
+    top: '30px',
+    background: '#ef4444',
+    color: '#fff',
+    padding: '12px 24px',
+    borderRadius: '30px',
     fontSize: '14px',
-    zIndex: 1002,
-    textAlign: 'center',
-    maxWidth: '300px',
-    width: '90%',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(255,107,157,0.2)',
-    animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    lineHeight: '1.5'
+    fontWeight: '600',
+    zIndex: 2000,
+    boxShadow: '0 10px 25px rgba(239, 68, 68, 0.4)',
+    animation: 'slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
   }
 };
 
+// CSS animations string (Aapke animations variable ke liye)
 export const animations = `
+  @keyframes scaleUp {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
   @keyframes fall {
-    0% { 
-      transform: translateY(-30px) rotate(0deg) scale(1); 
-      opacity: 1; 
-    }
-    50% {
-      transform: translateY(50vh) rotate(180deg) scale(0.8);
-      opacity: 0.8;
-    }
-    100% { 
-      transform: translateY(110vh) rotate(360deg) scale(0.6); 
-      opacity: 0; 
-    }
-  }
-
-  @keyframes fadeInCard {
-    from { 
-      opacity: 0; 
-      transform: scale(0.85) translateY(30px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: scale(1) translateY(0); 
-    }
-  }
-
-  @keyframes heartbeat {
-    0%, 100% { transform: scale(1); }
-    25% { transform: scale(1.15); }
-    50% { transform: scale(1.05); }
-    75% { transform: scale(1.2); }
-  }
-
-  @keyframes slideUp {
-    from { 
-      opacity: 0; 
-      transform: translateX(-50%) translateY(20px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateX(-50%) translateY(0); 
-    }
-  }
-
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.3; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
   }
 `;

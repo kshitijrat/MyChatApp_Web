@@ -44,10 +44,23 @@ const MoodPicker = ({ onClose }) => {
               key={mood.text}
               style={{
                 ...styles.moodBtn,
-                background: selected === mood.text ? '#00a88420' : '#2a3942',
-                border: selected === mood.text ? '1px solid #00a884' : '1px solid transparent'
+                background: selected === mood.text 
+                  ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.25) 0%, rgba(124, 58, 237, 0.25) 100%)' 
+                  : 'rgba(15, 12, 41, 0.4)',
+                border: selected === mood.text 
+                  ? '1px solid #7c3aed' 
+                  : '1px solid rgba(99, 102, 241, 0.15)',
+                boxShadow: selected === mood.text 
+                  ? '0 0 12px rgba(124, 58, 237, 0.3)' 
+                  : 'none'
               }}
               onClick={() => handleSelect(mood)}
+              onMouseEnter={(e) => {
+                if (selected !== mood.text) e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                if (selected !== mood.text) e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.15)';
+              }}
             >
               <span style={styles.moodEmoji}>{mood.emoji}</span>
               <span style={styles.moodText}>{mood.text}</span>
@@ -63,6 +76,14 @@ const MoodPicker = ({ onClose }) => {
             value={customMood}
             onChange={(e) => setCustomMood(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleCustomSave()}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#7c3aed';
+              e.target.style.boxShadow = '0 0 10px rgba(124, 58, 237, 0.2)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'rgba(99, 102, 241, 0.2)';
+              e.target.style.boxShadow = 'none';
+            }}
           />
           <button style={styles.saveBtn} onClick={handleCustomSave}>
             Save
@@ -75,6 +96,16 @@ const MoodPicker = ({ onClose }) => {
           onClick={async () => {
             await updateMood('');
             onClose();
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.color = '#fca5a5';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.color = '#94a3b8';
           }}
         >
           Clear mood
@@ -89,95 +120,113 @@ const styles = {
   overlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
+    background: 'rgba(15, 12, 41, 0.6)',
+    backdropFilter: 'blur(8px)',
     zIndex: 200,
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'flex-end', // Bottom sheet feel style on mobile
     justifyContent: 'center'
   },
   container: {
-    background: '#202c33',
-    borderRadius: '16px 16px 0 0',
-    padding: '20px',
+    background: 'linear-gradient(135deg, #1e1b4b 0%, #110e2e 100%)',
+    borderRadius: '24px 24px 0 0',
+    padding: '24px',
     width: '100%',
-    maxWidth: '500px',
-    paddingBottom: '32px'
+    maxWidth: '460px',
+    paddingBottom: '36px',
+    boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    borderTop: '1px solid rgba(167, 139, 250, 0.25)',
+    borderLeft: '1px solid rgba(167, 139, 250, 0.15)',
+    borderRight: '1px solid rgba(167, 139, 250, 0.15)'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '16px'
-    
+    marginBottom: '20px'
   },
   title: {
-    color: '#e9edef',
-    fontSize: '16px',
-    fontWeight: '600'
+    color: '#f8fafc',
+    fontSize: '18px',
+    fontWeight: '700',
+    letterSpacing: '-0.3px'
   },
   closeBtn: {
-    background: 'transparent',
+    background: 'rgba(255, 255, 255, 0.05)',
     border: 'none',
-    color: '#8696a0',
-    fontSize: '18px',
-    cursor: 'pointer'
+    color: '#94a3b8',
+    fontSize: '14px',
+    cursor: 'pointer',
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'background 0.2s'
   },
   moodGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '8px',
-    marginBottom: '16px'
+    gap: '10px',
+    marginBottom: '20px'
   },
   moodBtn: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    padding: '10px 14px',
-    borderRadius: '10px',
+    gap: '10px',
+    padding: '12px 16px',
+    borderRadius: '12px',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   moodEmoji: {
-    fontSize: '20px'
+    fontSize: '22px'
   },
   moodText: {
-    color: '#e9edef',
-    fontSize: '13px'
+    color: '#e2e8f0',
+    fontSize: '14px',
+    fontWeight: '500'
   },
   customSection: {
     display: 'flex',
-    gap: '8px',
-    marginBottom: '12px'
+    gap: '10px',
+    marginBottom: '16px'
   },
   customInput: {
     flex: 1,
-    background: '#2a3942',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '10px 14px',
-    color: '#e9edef',
+    background: 'rgba(15, 12, 41, 0.5)',
+    border: '1px solid rgba(99, 102, 241, 0.2)',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    color: '#f8fafc',
     fontSize: '14px',
-    outline: 'none'
+    outline: 'none',
+    transition: 'all 0.2s ease'
   },
   saveBtn: {
-    background: '#00a884',
+    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
     border: 'none',
-    borderRadius: '8px',
-    padding: '10px 16px',
+    borderRadius: '12px',
+    padding: '12px 20px',
     color: '#fff',
     fontSize: '14px',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
+    transition: 'opacity 0.2s'
   },
   clearBtn: {
     width: '100%',
     background: 'transparent',
-    border: '1px solid #374045',
-    borderRadius: '8px',
-    padding: '10px',
-    color: '#8696a0',
-    fontSize: '13px',
-    cursor: 'pointer'
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '12px',
+    padding: '12px',
+    color: '#94a3b8',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
   }
 };
 

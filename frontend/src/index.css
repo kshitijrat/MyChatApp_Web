@@ -4,22 +4,16 @@
   box-sizing: border-box;
 }
 
-html,
-body,
-root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    sans-serif;
-  background-color: #111b21;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0a0a1a;
   color: #e9edef;
+  height: 100vh;
   overflow: hidden;
-  height: 100%;
-  height: -webkit-fill-available;
-  margin: 0;
-  padding: 0;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,6 +21,43 @@ root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374045;
-  border-radius: 3px;
+  background: #2d2d5e;
+  border-radius: 4px;
+}
+
+input, textarea {
+  font-size: 16px !important;
+}
+
+html, body, #root {
+  height: 100%;
+  height: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
+}
+
+/* Swipe to reply */
+.message-wrapper {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  touch-action: pan-y;
+}
+
+.message-wrapper.swiping {
+  transition: none;
+}
+
+/* Long press menu */
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
