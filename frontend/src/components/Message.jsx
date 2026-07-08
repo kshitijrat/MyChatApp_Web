@@ -45,7 +45,7 @@ const Message = ({
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [loveNoteOpen]);
 
@@ -390,10 +390,20 @@ const Message = ({
             {msg.type === "love_note" && (
               <div style={styles.loveNoteContainer}>
                 {isOwn ? (
-                  <div style={styles.loveNoteTag}>💌 Secret Love Note Sent</div>
+                  msg.viewed ? (
+                    <div style={styles.loveNoteTag}>
+                      💌 Love Note •{" "}
+                      <span style={{ color: "#a78bfa" }}>Opened ✓</span>
+                    </div>
+                  ) : (
+                    <div style={styles.loveNoteTag}>
+                      💌 Secret Love Note Sent •{" "}
+                      <span style={{ color: "rgba(255,255,255,0.4)" }}>
+                        Not opened yet
+                      </span>
+                    </div>
+                  )
                 ) : msg.viewed && !loveNoteOpen ? (
-                  <div style={styles.loveNoteViewed}>💌 Love note opened</div>
-                ) : loveNoteOpen ? (
                   <>
                     <div style={styles.loveNoteTag}>💌 Secret Love Note</div>
                     <div style={styles.loveNoteText}>{msg.text}</div>
