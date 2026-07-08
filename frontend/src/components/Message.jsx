@@ -17,7 +17,7 @@ const Message = ({
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [viewOnceOpened, setViewOnceOpened] = useState(msg.viewed);
   const [loveNoteOpen, setLoveNoteOpen] = useState(false);
-  const [countdown, setCountdown] = useState(600);
+  const [countdown, setCountdown] = useState(180);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [showReplyHint, setShowReplyHint] = useState(false);
@@ -45,7 +45,7 @@ const Message = ({
         }
         return prev - 1;
       });
-    }, 3000);
+    }, 1000);
     return () => clearInterval(timer);
   }, [loveNoteOpen]);
 
@@ -162,7 +162,7 @@ const Message = ({
   // Love note open
   const handleOpenLoveNote = async () => {
     setLoveNoteOpen(true);
-    setCountdown(600);
+    setCountdown(180);
     try {
       await axios.patch(`${API_URL}/messages/view-once/${msg.id}`);
     } catch (err) {
